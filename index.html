@@ -63,14 +63,19 @@
   --shadow-1: 0 1px 0 rgba(252, 251, 250, 0.08);
   --shadow-2: 0 20px 48px -12px rgba(0, 0, 0, 0.75);
 
-  /* ДВИЖЕНИЕ */
+  /* ДВИЖЕНИЕ: экспонента A24 */
   --ease: cubic-bezier(0.19, 1, 0.22, 1);
-  --fast: 150ms;
-  --base: 350ms;
+  --fast: 160ms;
+  --base: 380ms;
+  --slow: 720ms;
 }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 4.75rem; /* WCAG 2.4.11 Focus Not Obscured под липкой шапкой */
+}
 body {
   margin: 0;
   background: var(--bg);
@@ -98,6 +103,20 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   font-variant-numeric: tabular-nums;
 }
 
+/* --- ИНДИКАТОР ПРОКРУТКИ СТРАНИЦЫ (Scroll Progress Indicator) --- */
+#scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--accent);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  z-index: 120;
+  pointer-events: none;
+}
+
 /* --- КНОПКИ И ССЫЛКИ --- */
 .btn {
   display: inline-flex;
@@ -113,14 +132,19 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   text-decoration: none;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background-color var(--fast) var(--ease), color var(--fast) var(--ease), border-color var(--fast) var(--ease), transform var(--fast) var(--ease);
+  transition: background-color var(--fast) var(--ease), color var(--fast) var(--ease), border-color var(--fast) var(--ease), transform var(--base) var(--ease);
 }
 .btn-main { background: var(--accent); color: var(--accent-ink); }
 .btn-main:hover { background: var(--ink); color: var(--bg); }
 .btn-second { background: transparent; color: var(--ink); border-color: var(--ink); }
 .btn-second:hover { background: var(--ink); color: var(--bg); }
+.btn .arr {
+  display: inline-block;
+  transition: transform var(--base) var(--ease);
+}
 
 .nav-link {
+  position: relative;
   display: inline-flex;
   align-items: center;
   min-block-size: 2.75rem;
@@ -133,7 +157,23 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   text-transform: uppercase;
   transition: color var(--fast) var(--ease);
 }
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: var(--s-2);
+  right: var(--s-2);
+  bottom: 8px;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--base) var(--ease);
+}
 .nav-link:hover { color: var(--ink); }
+.nav-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
 
 .ext-link {
   display: inline-flex;
@@ -147,19 +187,18 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   text-decoration-color: var(--accent);
   text-underline-offset: 5px;
   text-decoration-thickness: 1.5px;
-  transition: color var(--fast) var(--ease);
+  transition: color var(--fast) var(--ease), transform var(--base) var(--ease);
 }
 .ext-link:hover { color: var(--accent); }
 
-@media (prefers-reduced-motion: no-preference) {
-  .btn-main:hover { transform: translateY(-2px); }
-  .btn-main:active { transform: translateY(0); }
-}
-
-/* --- ШАПКА САЙТА (A24 Top Bar) --- */
+/* --- ШАПКА САЙТА (Sticky Shrinking Header) --- */
 .site-header {
+  position: sticky;
+  top: 0;
+  z-index: 90;
   border-bottom: 1px solid var(--line);
-  background: var(--bg);
+  background: rgba(14, 14, 13, 0.95);
+  backdrop-filter: blur(12px);
 }
 .header-inner {
   display: flex;
@@ -188,6 +227,7 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   height: 8px;
   background: var(--accent);
   display: inline-block;
+  box-shadow: 0 0 10px var(--accent);
 }
 .site-nav {
   display: flex;
@@ -265,6 +305,14 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   border: 1px solid var(--line);
   background: var(--surface);
   padding: var(--s-4);
+  transition: border-color var(--base) var(--ease);
+}
+.poster-frame:hover {
+  border-color: var(--muted);
+}
+.poster-media {
+  overflow: hidden;
+  background: var(--bg);
 }
 .poster-frame img {
   display: block;
@@ -273,6 +321,7 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   aspect-ratio: 761 / 900;
   object-fit: cover;
   filter: contrast(1.04);
+  transition: transform var(--slow) var(--ease);
 }
 .poster-caption {
   margin-top: var(--s-3);
@@ -313,6 +362,7 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   margin-bottom: var(--s-8);
 }
 .artist-cell {
+  position: relative;
   padding: var(--s-6);
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
@@ -321,22 +371,39 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   flex-direction: column;
   justify-content: space-between;
   gap: var(--s-5);
-  transition: background-color var(--fast) var(--ease);
+  overflow: hidden;
+  transition: background-color var(--base) var(--ease);
+}
+.artist-cell::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--base) var(--ease);
 }
 .artist-cell:hover { background: var(--surface-2); }
+.artist-cell:hover::after { transform: scaleX(1); }
 .artist-top {
   display: flex;
   justify-content: space-between;
   font-family: var(--font-mono);
   font-size: var(--t-small);
   color: var(--muted);
+  transition: color var(--fast) var(--ease);
 }
+.artist-cell:hover .artist-top span:first-child { color: var(--accent); }
 .artist-name {
   font-family: var(--font-head);
   font-size: clamp(1.4rem, 1.1rem + 1.4vw, 2.25rem);
   font-weight: 600;
   color: var(--ink);
   letter-spacing: -0.03em;
+  transition: transform var(--base) var(--ease);
 }
 @media (max-width: 820px) {
   .artist-roster { grid-template-columns: repeat(2, 1fr); }
@@ -367,10 +434,15 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   justify-content: space-between;
   align-items: baseline;
   gap: var(--s-4);
-  padding: var(--s-4) 0;
+  padding: var(--s-4) var(--s-3);
   border-bottom: 1px solid var(--line);
   font-family: var(--font-mono);
   font-size: var(--t-small);
+  transition: background-color var(--fast) var(--ease), transform var(--base) var(--ease), border-color var(--fast) var(--ease);
+}
+.track-ledger li:hover {
+  background: var(--surface);
+  border-bottom-color: var(--muted);
 }
 .track-ledger .t-title {
   color: var(--ink);
@@ -422,6 +494,10 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
 .craft-item {
   border-top: 1px solid var(--line);
   padding-top: var(--s-4);
+  transition: border-color var(--base) var(--ease);
+}
+.craft-item:hover {
+  border-top-color: var(--accent);
 }
 .craft-item h3 {
   font-size: var(--t-h3);
@@ -531,6 +607,10 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
 .step-col {
   border-top: 1px solid var(--ink);
   padding-top: var(--s-4);
+  transition: border-color var(--base) var(--ease), transform var(--base) var(--ease);
+}
+.step-col:hover {
+  border-top-color: var(--accent);
 }
 .step-col h3 {
   font-size: var(--t-h3);
@@ -557,6 +637,10 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   background: var(--surface);
   border: 1px solid var(--line);
   padding: clamp(24px, 3.5vw, 44px);
+  transition: border-color var(--base) var(--ease);
+}
+.spec-card:hover {
+  border-color: var(--muted);
 }
 .spec-card h3 {
   font-size: var(--t-h3);
@@ -595,6 +679,10 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   align-items: center;
   gap: var(--s-6);
   flex-wrap: wrap;
+  transition: border-color var(--base) var(--ease);
+}
+.dj-banner:hover {
+  border-color: var(--accent);
 }
 .dj-banner h3 {
   font-size: var(--t-h2);
@@ -634,7 +722,9 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   align-items: center;
   gap: var(--s-5);
   min-block-size: 2.75rem;
+  transition: color var(--fast) var(--ease);
 }
+.faq-list summary:hover { color: var(--accent); }
 .faq-list summary::-webkit-details-marker { display: none; }
 .faq-list summary::after {
   content: "+";
@@ -684,9 +774,105 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   flex-wrap: wrap;
   gap: var(--s-5);
 }
+
+/* --- КИНЕМАТОГРАФИЧНЫЕ АНИМАЦИИ (Opt-in для prefers-reduced-motion: no-preference) --- */
+@media (prefers-reduced-motion: no-preference) {
+  /* Микро-интеракции при наведении */
+  .btn-main:hover { transform: translateY(-2px); }
+  .btn-main:active { transform: translateY(0); }
+  .btn:hover .arr { transform: translateX(4px); }
+  .poster-frame:hover img { transform: scale(1.035); }
+  .artist-cell:hover .artist-name { transform: translateX(6px); }
+  .track-ledger li:hover { transform: translateX(8px); }
+  .step-col:hover { transform: translateY(-4px); }
+  .ext-link:hover { transform: translateY(-1px); }
+
+  /* Пульсация студийного индикатора REC */
+  @keyframes rec-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.88); }
+  }
+  .rec-dot {
+    animation: rec-pulse 2.4s ease-in-out infinite;
+  }
+
+  /* Каскадное появление первого экрана (A24 Title Reveal) */
+  @keyframes hero-rise {
+    from {
+      opacity: 0;
+      transform: translateY(22px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes poster-unveil {
+    from {
+      opacity: 0;
+      transform: scale(1.05);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  .issue-meta { animation: hero-rise 0.7s var(--ease) 0.05s backwards; }
+  .hero-copy h1 { animation: hero-rise 0.8s var(--ease) 0.14s backwards; }
+  .hero-sub { animation: hero-rise 0.8s var(--ease) 0.24s backwards; }
+  .hero-copy .cta-row { animation: hero-rise 0.8s var(--ease) 0.34s backwards; }
+  .hero-specs { animation: hero-rise 0.85s var(--ease) 0.44s backwards; }
+  .poster-frame { animation: poster-unveil 1s var(--ease) 0.18s backwards; }
+
+  /* Нативный CSS Scroll Progress Indicator */
+  @supports (animation-timeline: scroll()) {
+    @keyframes grow-progress {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
+    }
+    #scroll-progress {
+      animation: grow-progress auto linear;
+      animation-timeline: scroll(block root);
+    }
+  }
+
+  /* Нативные Scroll-Driven Entry Animations для секций и карточек */
+  @supports ((animation-timeline: view()) and (animation-range: entry)) {
+    @keyframes scroll-enter {
+      from {
+        transform: translateY(28px);
+      }
+      to {
+        transform: translateY(0);
+      }
+    }
+    @keyframes line-draw {
+      from {
+        transform: scaleX(0.15);
+      }
+      to {
+        transform: scaleX(1);
+      }
+    }
+    .artist-cell,
+    .craft-item,
+    .pricing-spread > div,
+    .step-col,
+    .spec-card,
+    .dj-banner,
+    .faq-list details,
+    .manifesto-box {
+      animation: scroll-enter auto var(--ease) both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}
 </style>
 </head>
 <body>
+
+<div id="scroll-progress" aria-hidden="true"></div>
 
 <header class="site-header">
   <div class="wrap header-inner">
@@ -700,7 +886,7 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
       <a class="nav-link" href="#studio">Студия &amp; DJ</a>
       <a class="nav-link" href="#faq">FAQ</a>
     </nav>
-    <a class="btn btn-main" href="https://t.me/zerouone01">Заказать сведение <span aria-hidden="true">→</span></a>
+    <a class="btn btn-main" href="https://t.me/zerouone01">Заказать сведение <span class="arr" aria-hidden="true">→</span></a>
   </div>
 </header>
 
@@ -718,7 +904,7 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
           <h1>Твой трек звучит как дорогой релиз</h1>
           <p class="hero-sub">Сведение и мастеринг за 2–3 дня от звукорежиссёра с 5-летним опытом. Чувствую музыку всей душой и довожу каждый микс до плотного коммерческого звучания.</p>
           <div class="cta-row">
-            <a class="btn btn-main" href="https://t.me/zerouone01">Заказать сведение <span aria-hidden="true">→</span></a>
+            <a class="btn btn-main" href="https://t.me/zerouone01">Заказать сведение <span class="arr" aria-hidden="true">→</span></a>
             <a class="btn btn-second" href="https://t.me/zerouonemixmaster">Слушать примеры в ТГ</a>
           </div>
           <div class="hero-specs">
@@ -742,7 +928,9 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
         </div>
 
         <figure class="poster-frame">
-          <img src="img/yaroslav-800.jpg" alt="Ярослав ZEROUONE в студии с мониторами Adam Audio и наушниками beyerdynamic" width="761" height="900">
+          <div class="poster-media">
+            <img src="img/yaroslav-800.jpg" alt="Ярослав ZEROUONE в студии с мониторами Adam Audio и наушниками beyerdynamic" width="761" height="900">
+          </div>
           <figcaption class="poster-caption">
             <span>YAROSLAV / ZEROUONE</span>
             <span>STUDIO · MIX &amp; MASTER</span>
@@ -883,7 +1071,7 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
             </ul>
           </div>
           <div>
-            <a class="btn btn-main" href="https://t.me/zerouone01">Заказать сведение <span aria-hidden="true">→</span></a>
+            <a class="btn btn-main" href="https://t.me/zerouone01">Заказать сведение <span class="arr" aria-hidden="true">→</span></a>
           </div>
         </div>
 
@@ -990,7 +1178,7 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
             <h3>DJ ZEROUONE — Хип-хоп, Рэп, Андеграунд, Хаус</h3>
             <p>Активно выступаю с диджей-сетами (контроллер Pioneer DDJ-SB3). Сеты для клубов, локальных вечеринок, презентаций альбомов и артист-шоукейсов.</p>
           </div>
-          <a class="btn btn-main" href="https://t.me/zerouone01">Заказать сведение <span aria-hidden="true">→</span></a>
+          <a class="btn btn-main" href="https://t.me/zerouone01">Заказать сведение <span class="arr" aria-hidden="true">→</span></a>
         </div>
       </div>
     </div>
@@ -1036,7 +1224,7 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
         <h2>Скидывай демку в Telegram — разберём звук</h2>
       </div>
       <div class="cta-row">
-        <a class="btn btn-main" href="https://t.me/zerouone01">Заказать сведение <span aria-hidden="true">→</span></a>
+        <a class="btn btn-main" href="https://t.me/zerouone01">Заказать сведение <span class="arr" aria-hidden="true">→</span></a>
         <a class="btn btn-second" href="https://t.me/zerouonemixmaster">Слушать примеры в ТГ</a>
       </div>
     </div>
@@ -1053,5 +1241,31 @@ p, li, blockquote { margin: 0; max-width: var(--measure); text-wrap: pretty; }
   </div>
 </footer>
 
+<script>
+  // Фолбэки для браузеров без нативных CSS Scroll-Driven Animations (с учётом prefers-reduced-motion)
+  if (matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+    if (!CSS.supports('animation-timeline', 'scroll()')) {
+      const progress = document.querySelector('#scroll-progress');
+      if (progress) {
+        window.addEventListener('scroll', () => {
+          const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+          const pct = scrollable > 0 ? window.scrollY / scrollable : 0;
+          progress.style.transform = `scaleX(${pct})`;
+        }, { passive: true });
+      }
+    }
+
+    if (!CSS.supports('(animation-timeline: view()) and (animation-range: entry)')) {
+      const targets = document.querySelectorAll('.artist-cell, .craft-item, .pricing-spread > div, .step-col, .spec-card, .dj-banner, .faq-list details, .manifesto-box');
+      const observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          const shift = Math.round((1 - Math.min(1, entry.intersectionRatio * 2.5)) * 24);
+          entry.target.style.transform = `translateY(${shift}px)`;
+        }
+      }, { threshold: [0, 0.1, 0.25, 0.5, 1] });
+      targets.forEach((el) => observer.observe(el));
+    }
+  }
+</script>
 </body>
 </html>
